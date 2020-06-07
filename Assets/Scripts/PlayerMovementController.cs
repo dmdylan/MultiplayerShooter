@@ -59,16 +59,15 @@ public class PlayerMovementController : NetworkBehaviour
 
 		Camera.main.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
-
 		if (Input.GetKeyDown(KeyCode.LeftShift))
 			isRunning = !isRunning;
 
 		transform.Rotate(Vector3.up * mouseX);
 		Move(inputDir, isRunning);
 
-		if (Input.GetKeyDown(KeyCode.Space))
+		if (Input.GetKeyDown(KeyCode.Space) && controller.isGrounded)
 		{
-			CmdJump();
+			Jump();
 		}
 
 		// animator
@@ -99,14 +98,10 @@ public class PlayerMovementController : NetworkBehaviour
 		}
 	}
 
-	[Command]
-	void CmdJump()
+	void Jump()
 	{
-		if (controller.isGrounded)
-		{
-			float jumpVelocity = Mathf.Sqrt(-2 * gravity * jumpHeight);
-			velocityY = jumpVelocity;
-		}
+		float jumpVelocity = Mathf.Sqrt(-2 * gravity * jumpHeight);
+		velocityY = jumpVelocity;
 	}
 
 	float GetModifiedSmoothTime(float smoothTime)
