@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,7 +9,7 @@ public class FloatingPlayerInfo : NetworkBehaviour
     //TODO: May be able to disable the floating info if islocalplayer so it doesn't render for client, only others
     [SerializeField] private TMP_Text playerNameText = null;
     [SerializeField] private GameObject floatingInfo = null;
-    [SerializeField] private Image healthBar = null;
+    [SerializeField] private Slider healthBar = null;
     private Material playerMaterialClone;
     private PlayerInfo player;
 
@@ -54,7 +55,7 @@ public class FloatingPlayerInfo : NetworkBehaviour
     [Command]
     public void CmdUpdateHealthBar()
     {
-        healthBar.fillAmount = player.PlayerHealth / player.MaxHealth;
+        healthBar.value = player.PlayerHealth / player.MaxHealth;
     }
 
     //Update is called once per frame
@@ -66,6 +67,9 @@ public class FloatingPlayerInfo : NetworkBehaviour
             floatingInfo.transform.LookAt(Camera.main.transform);
             healthBar.transform.LookAt(Camera.main.transform);
         }
+
+        if (!isLocalPlayer)
+            return;
 
         CmdUpdateHealthBar();
     }

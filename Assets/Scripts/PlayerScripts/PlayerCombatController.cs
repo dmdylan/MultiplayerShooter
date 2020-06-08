@@ -29,6 +29,11 @@ public class PlayerCombatController : NetworkBehaviour
         activeWeaponSynced = currentLocalWeapon;
     }
 
+    IEnumerator FireWeapon(Weapon weapon)
+    {
+        return null;
+    }
+
     // Update is called once per frame
     void Update()
     {
