@@ -1,12 +1,16 @@
 ﻿using Mirror;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class PlayerScript : NetworkBehaviour
+public class FloatingPlayerInfo : NetworkBehaviour
 {
+    //TODO: May be able to disable the floating info if islocalplayer so it doesn't render for client, only others
     [SerializeField] private TMP_Text playerNameText = null;
     [SerializeField] private GameObject floatingInfo = null;
+    [SerializeField] private Image healthBar = null;
     private Material playerMaterialClone;
+    private PlayerInfo player;
 
     [SyncVar(hook = nameof(OnNameChanged))]
     private string playerName;
@@ -31,6 +35,7 @@ public class PlayerScript : NetworkBehaviour
 
     public override void OnStartLocalPlayer()
     {
+        player = GetComponent<PlayerInfo>();
         //floatingInfo.transform.localPosition = new Vector3(0, -0.3f, 0.6f);
         //floatingInfo.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
         CmdSetupPlayer("Player" + Random.Range(100, 999), new Color(Random.Range(0f, 1f),
@@ -45,13 +50,28 @@ public class PlayerScript : NetworkBehaviour
         playerColor = _col;
     }
 
-    // Update is called once per frame
+    //TODO: Can setup an event that calls this command when it is triggered
+    [Command]
+    public void CmdUpdateHealthBar()
+    {
+        healthBar.fillAmount = player.PlayerHealth / player.MaxHealth;
+    }
+
+    //Update is called once per frame
     void Update()
     {
         //allow all players to run this
         if (isLocalPlayer == false)
         {
             floatingInfo.transform.LookAt(Camera.main.transform);
+            healthBar.transform.LookAt(Camera.main.transform);
         }
+
+        CmdUpdateHealthBar();
+    }
+
+    private void OnDestroy()
+    {
+        Destroy(playerMaterialClone);
     }
 }

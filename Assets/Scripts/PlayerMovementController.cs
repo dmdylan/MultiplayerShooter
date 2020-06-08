@@ -32,7 +32,7 @@ public class PlayerMovementController : NetworkBehaviour
 		base.OnStartLocalPlayer();
 
 		Camera.main.transform.SetParent(transform);
-		Camera.main.transform.localPosition = new Vector3(0, 0, 0);
+		Camera.main.transform.localPosition = new Vector3(0, .7f, 0);
 		controller = GetComponent<CharacterController>();
 		//animator = GetComponent<Animator>();
 	}
