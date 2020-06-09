@@ -1,6 +1,7 @@
 ﻿using Mirror;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class PlayerCombatController : NetworkBehaviour
 {
@@ -9,6 +10,13 @@ public class PlayerCombatController : NetworkBehaviour
 
     [SyncVar(hook = nameof(OnWeaponChanged))]
     private int activeWeaponSynced;
+
+    private Weapon weapon;
+
+    private void Start()
+    {
+        weapon = weaponArray[selectedWeaponLocal].GetComponent<Weapon>();
+    }
 
     void OnWeaponChanged(int _old, int _new)
     {
@@ -20,6 +28,7 @@ public class PlayerCombatController : NetworkBehaviour
         if (_new < weaponArray.Length && weaponArray[_new] != null)
         {
             weaponArray[_new].SetActive(true);
+            weapon = weaponArray[_new].GetComponent<Weapon>();
         }
     }
 
@@ -29,17 +38,14 @@ public class PlayerCombatController : NetworkBehaviour
         activeWeaponSynced = currentLocalWeapon;
     }
 
-    IEnumerator FireWeapon(Weapon weapon)
+    [Command]
+    private void CmdFireWeapon()
     {
-        return null;
+        StartCoroutine(weapon.Attack());
     }
 
-    // Update is called once per frame
-    void Update()
+    private void ChangeWeapons()
     {
-        //only our own player runs below here
-        if (!isLocalPlayer) { return; }
-
         var scrollInput = Input.GetAxis("Mouse ScrollWheel");
 
         if (scrollInput > 0f)
@@ -69,6 +75,20 @@ public class PlayerCombatController : NetworkBehaviour
         {
             selectedWeaponLocal = 2;
             CmdChangeActiveWeapon(selectedWeaponLocal);
+        }
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        //only our own player runs below here
+        if (!isLocalPlayer) { return; }
+
+        ChangeWeapons();
+
+        if (Input.GetKey(KeyCode.Mouse0))
+        {
+            CmdFireWeapon();
         }
     }
 }
