@@ -12,11 +12,6 @@ public class Pistol : Weapon
     private int currentAmmo = 0;
     private ParticleSystem muzzleFlash;
 
-    //public override void OnStartLocalPlayer()
-    //{
-    //    base.OnStartLocalPlayer();
-    //}
-
     public override IEnumerator Attack()
     {
         if (canAttack.Equals(false))
@@ -45,7 +40,7 @@ public class Pistol : Weapon
 
     private void Start()
     {
-        transform.SetParent(Camera.main.transform);
+        //transform.SetParent(Camera.main.transform);
         muzzleFlash = GetComponent<ParticleSystem>();
         PistolSetup();
     }

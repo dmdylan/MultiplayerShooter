@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine;
 
-public abstract class Weapon : MonoBehaviour
+public abstract class Weapon : NetworkBehaviour
 {
     [SerializeField] protected ParticleSystem locationHitMark;
     [SerializeField] protected Sprite locationHitMarkSprite;
