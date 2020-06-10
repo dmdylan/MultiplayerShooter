@@ -2,9 +2,8 @@
 using System.Collections;
 using UnityEngine;
 
-public abstract class Weapon : NetworkBehaviour
+public abstract class Weapon : MonoBehaviour
 {
-    [SerializeField] protected ParticleSystem muzzleFlash;
     [SerializeField] protected ParticleSystem locationHitMark;
     [SerializeField] protected Sprite locationHitMarkSprite;
 
@@ -12,6 +11,7 @@ public abstract class Weapon : NetworkBehaviour
     public float WeaponDamage { get; protected set; }
     public int MaxAmmo { get; protected set; }
     public float AttackRate { get; protected set; }
+
     protected bool canAttack = true;
     public abstract IEnumerator Attack();
 

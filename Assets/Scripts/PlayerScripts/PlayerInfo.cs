@@ -1,7 +1,7 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class PlayerInfo : NetworkBehaviour
+public class PlayerInfo : NetworkBehaviour, IDamageable
 {
     [SyncVar]
     [SerializeField] private float playerHealth;
@@ -20,5 +20,18 @@ public class PlayerInfo : NetworkBehaviour
     void Start()
     {
         playerHealth = maxHealth;   
+    }
+
+    public void TakeDamage(float damageAmount)
+    {
+        if (playerHealth - damageAmount <= 0)
+            PlayerDeath();
+        else
+            playerHealth -= damageAmount;
+    }
+
+    private void PlayerDeath()
+    {
+        Debug.Log("Player dead");
     }
 }

@@ -10,12 +10,12 @@ public class Pistol : Weapon
     [SerializeField] private int maxAmmo = 0;
     [SerializeField] private float attackRate = 0;
     private int currentAmmo = 0;
+    private ParticleSystem muzzleFlash;
 
-    public override void OnStartLocalPlayer()
-    {
-        base.OnStartLocalPlayer();
-        transform.SetParent(Camera.main.transform);
-    }
+    //public override void OnStartLocalPlayer()
+    //{
+    //    base.OnStartLocalPlayer();
+    //}
 
     public override IEnumerator Attack()
     {
@@ -35,6 +35,8 @@ public class Pistol : Weapon
             }
         }
 
+        muzzleFlash.Play();
+
         currentAmmo--;
 
         yield return new WaitForSeconds(AttackRate);
@@ -43,6 +45,8 @@ public class Pistol : Weapon
 
     private void Start()
     {
+        transform.SetParent(Camera.main.transform);
+        muzzleFlash = GetComponent<ParticleSystem>();
         PistolSetup();
     }
 
