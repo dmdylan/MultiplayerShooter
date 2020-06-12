@@ -13,7 +13,8 @@ public abstract class Weapon : NetworkBehaviour
     public float AttackRate { get; protected set; }
 
     protected bool canAttack = true;
-    public abstract IEnumerator Attack();
+
+    public abstract void CmdAttack();
 
     public virtual void ReloadWeapon()
     {

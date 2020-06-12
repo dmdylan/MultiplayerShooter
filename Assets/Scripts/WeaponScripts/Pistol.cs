@@ -11,14 +11,12 @@ public class Pistol : Weapon
     [SerializeField] private float attackRate = 0;
     private int currentAmmo = 0;
     private ParticleSystem muzzleFlash;
+    NetworkIdentity network;
 
-    public override IEnumerator Attack()
+    //Might need to be a command to work on the server, but causes network identity error issue otherwise
+    //[Command]
+    public override void CmdAttack()
     {
-        if (canAttack.Equals(false))
-            yield break;
-
-        canAttack = false;
-
         RaycastHit hit;
 
         if(Physics.Raycast(firePoint.transform.position, firePoint.transform.forward, out hit, WeaponRange))
@@ -33,22 +31,28 @@ public class Pistol : Weapon
         muzzleFlash.Play();
 
         currentAmmo--;
+    }
 
-        yield return new WaitForSeconds(AttackRate);
-        canAttack = true;
+    public override void OnStartLocalPlayer()
+    {
+        base.OnStartLocalPlayer();
+        muzzleFlash = GetComponent<ParticleSystem>();
+        PistolSetup();
     }
 
     private void Start()
     {
-        //transform.SetParent(Camera.main.transform);
+        network = GetComponentInParent<NetworkIdentity>();
         muzzleFlash = GetComponent<ParticleSystem>();
-        PistolSetup();
+        //transform.SetParent(Camera.main.transform);
     }
 
     // Update is called once per frame
     void Update()
     {
-        transform.LookAt(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Camera.main.farClipPlane)));
+        if (!network.isLocalPlayer)
+            return;
+
         //Debug.DrawRay(firePoint.transform.position, firePoint.transform.forward * 100, Color.red);
     }
 

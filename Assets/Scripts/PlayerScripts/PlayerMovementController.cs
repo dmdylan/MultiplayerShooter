@@ -27,12 +27,15 @@ public class PlayerMovementController : NetworkBehaviour
 	//Animator animator;
 	CharacterController controller;
 
+	[SerializeField] private GameObject weaponHolster;
+
 	public override void OnStartLocalPlayer()
 	{
 		base.OnStartLocalPlayer();
-
 		Camera.main.transform.SetParent(transform);
-		Camera.main.transform.localPosition = new Vector3(0, .7f, 0);
+		Camera.main.transform.localPosition = new Vector3(0, .7f, 0f);
+		weaponHolster.transform.SetParent(Camera.main.transform);
+		weaponHolster.transform.localPosition = new Vector3(1f, -.5f, .2f);
 		controller = GetComponent<CharacterController>();
 		//animator = GetComponent<Animator>();
 	}
