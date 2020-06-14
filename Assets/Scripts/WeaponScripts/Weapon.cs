@@ -1,8 +1,7 @@
-﻿using Mirror;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
-public abstract class Weapon : NetworkBehaviour
+public abstract class Weapon : MonoBehaviour
 {
     [SerializeField] protected ParticleSystem locationHitMark;
     [SerializeField] protected Sprite locationHitMarkSprite;
@@ -14,7 +13,7 @@ public abstract class Weapon : NetworkBehaviour
 
     protected bool canAttack = true;
 
-    public abstract void CmdAttack();
+    public abstract IEnumerator FireWeapon();
 
     public virtual void ReloadWeapon()
     {

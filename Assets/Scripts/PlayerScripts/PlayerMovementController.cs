@@ -23,19 +23,19 @@ public class PlayerMovementController : NetworkBehaviour
 
 	//camera
 	float xRotation = 0f;
+	[SerializeField] private GameObject weaponHolster = null;
 
 	//Animator animator;
 	CharacterController controller;
 
-	[SerializeField] private GameObject weaponHolster;
-
 	public override void OnStartLocalPlayer()
 	{
 		base.OnStartLocalPlayer();
-		Camera.main.transform.SetParent(transform);
-		Camera.main.transform.localPosition = new Vector3(0, .7f, 0f);
-		weaponHolster.transform.SetParent(Camera.main.transform);
-		weaponHolster.transform.localPosition = new Vector3(1f, -.5f, .2f);
+		//Camera.main.transform.SetParent(transform);
+		//Camera.main.transform.localPosition = new Vector3(0, .7f, .1f);
+		//weaponHolster.transform.SetParent(Camera.main.transform);
+		//weaponHolster.transform.localPosition = new Vector3(.5f, -.4f, .5f);
+		//weaponHolster.transform.rotation = Quaternion.Euler(0, 0, 0);
 		controller = GetComponent<CharacterController>();
 		//animator = GetComponent<Animator>();
 	}
@@ -44,6 +44,9 @@ public class PlayerMovementController : NetworkBehaviour
 	{
 		Cursor.lockState = CursorLockMode.Locked;
 		Cursor.visible = !Cursor.visible;
+
+		if (!isLocalPlayer) { return; }
+
 	}
 
 	void Update()
@@ -120,63 +123,4 @@ public class PlayerMovementController : NetworkBehaviour
 		}
 		return smoothTime / airControlPercent;
 	}
-
-
-
-
-	//private CharacterController playerController;
-	//[SerializeField] private float speed = 12f;
-	//[SerializeField] private float gravity = -9.81f;
-	//[SerializeField] private float jumpHeight = 0.001f;
-	//
-	//[SerializeField] private Transform groundCheck = null;
-	//[SerializeField] private float groundDistance = 0.4f;
-	//[SerializeField] private LayerMask groundMask = 0;
-	//
-	//Vector3 move;
-	//bool isGrounded;
-	//
-	//public override void OnStartLocalPlayer()
-	//{
-	//    playerController = GetComponent<CharacterController>();
-	//}
-	//
-	//// Update is called once per frame
-	//void Update()
-	//{
-	//    if (!isLocalPlayer) return;
-	//
-	//    isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
-	//
-	//    Debug.Log(isGrounded);
-	//
-	//    //if (isGrounded && velocity.y < 0)
-	//    //{
-	//    //    velocity.y = -2;
-	//    //}
-	//
-	//    if (Input.GetButtonDown("Jump") && isGrounded)
-	//    {
-	//        CmdJump();
-	//    }
-	//
-	//    float x = Input.GetAxisRaw("Horizontal");
-	//    float z = Input.GetAxisRaw("Vertical");
-	//    
-	//    move = (transform.right * x + transform.forward * z).normalized;
-	//
-	//    move.y += gravity * Time.deltaTime;
-	//    playerController.Move(move * speed * Time.deltaTime);
-	//    //playerController.Move(velocity * Time.deltaTime);   
-	//
-	//    Debug.Log(move);
-	//}
-	//
-	//[Command]
-	//void CmdJump() 
-	//{
-	//    Debug.Log("jumped pressed");
-	//    move.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-	//}
-
 }
