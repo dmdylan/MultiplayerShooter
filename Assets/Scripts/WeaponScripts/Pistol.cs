@@ -31,7 +31,8 @@ public class Pistol : Weapon
             }
         }
 
-        muzzleFlash.Play();
+        WeaponEffects();
+
         currentAmmo--;
 
         Debug.Log(AttackRate);
@@ -40,14 +41,21 @@ public class Pistol : Weapon
         canAttack = true;
     }
 
+    void WeaponEffects()
+    {
+        muzzleFlash.Play();       
+    }
+
     private void Start()
     {
-        muzzleFlash = GetComponent<ParticleSystem>();
+
+            muzzleFlash = GetComponent<ParticleSystem>();
+            PistolSetup();
+        
     }
 
     private void OnEnable()
     {
-        PistolSetup();
     }
 
     private void PistolSetup()

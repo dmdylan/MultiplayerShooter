@@ -12,10 +12,12 @@ public class PlayerCombatController : NetworkBehaviour
     private int activeWeaponSynced;
 
     private Weapon weapon;
+    Camera playerCamera = null;
 
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
+        playerCamera = GetComponentInChildren<Camera>();
         weapon = weaponArray[selectedWeaponLocal].GetComponent<Weapon>();
     }
 
@@ -86,8 +88,7 @@ public class PlayerCombatController : NetworkBehaviour
         if (!isLocalPlayer) { return; }
 
         ChangeWeapons();
-        weapon.transform.LookAt(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Camera.main.farClipPlane)));
-
+        weapon.transform.LookAt(playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)));
 
         if (Input.GetKey(KeyCode.Mouse0))
         {

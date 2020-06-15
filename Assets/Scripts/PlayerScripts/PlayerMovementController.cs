@@ -24,6 +24,7 @@ public class PlayerMovementController : NetworkBehaviour
 	//camera
 	float xRotation = 0f;
 	[SerializeField] private GameObject weaponHolster = null;
+	Camera playerCamera = null;
 
 	//Animator animator;
 	CharacterController controller;
@@ -42,11 +43,18 @@ public class PlayerMovementController : NetworkBehaviour
 
 	private void Start()
 	{
-		Cursor.lockState = CursorLockMode.Locked;
-		Cursor.visible = !Cursor.visible;
+		playerCamera = GetComponentInChildren<Camera>();
+		//if (!isLocalPlayer) { return; }
 
-		if (!isLocalPlayer) { return; }
-
+		if (isLocalPlayer)
+		{
+			Cursor.lockState = CursorLockMode.Locked;
+			Cursor.visible = !Cursor.visible;
+		}
+		else
+		{
+			playerCamera.enabled = false;
+		}
 	}
 
 	void Update()
@@ -63,7 +71,7 @@ public class PlayerMovementController : NetworkBehaviour
 		xRotation -= mouseY;
 		xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
-		Camera.main.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+		playerCamera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
 		if (Input.GetKeyDown(KeyCode.LeftShift))
 			isRunning = !isRunning;
