@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -11,14 +12,21 @@ public class PlayerCombatController : NetworkBehaviour
     [SyncVar(hook = nameof(OnWeaponChanged))]
     private int activeWeaponSynced;
 
+    private Camera playerCamera = null;
+
     private Weapon weapon;
-    Camera playerCamera = null;
+    private bool canAttack = true;
+    private int currentAmmo = 0;
+    private Ray ray;
+    [SerializeField] private Transform firePoint;
+    [SerializeField] private GameObject muzzleFlashObject;
 
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
         playerCamera = GetComponentInChildren<Camera>();
         weapon = weaponArray[selectedWeaponLocal].GetComponent<Weapon>();
+        currentAmmo = weapon.weaponInfo.MaxAmmo;
     }
 
     void OnWeaponChanged(int _old, int _new)
@@ -31,7 +39,7 @@ public class PlayerCombatController : NetworkBehaviour
         if (_new < weaponArray.Length && weaponArray[_new] != null)
         {
             weaponArray[_new].SetActive(true);
-            //weapon = weaponArray[_new].GetComponent<Weapon>();
+            weapon = weaponArray[_new].GetComponent<Weapon>();
         }
     }
 
@@ -41,28 +49,62 @@ public class PlayerCombatController : NetworkBehaviour
         activeWeaponSynced = currentLocalWeapon;
     }
 
+    private IEnumerator FireWeapon()
+    {
+        if (canAttack.Equals(false) || currentAmmo <= 0)
+            yield break;
+
+        canAttack = false;
+        RpcWeaponEffects();
+
+        if (Physics.Raycast(playerCamera.transform.position, ray.direction, out RaycastHit hit, weapon.weaponInfo.WeaponRange))
+        {
+            Debug.Log("Shot fired");
+            Debug.Log(hit.collider.name);
+            if (TryGetComponent(out IDamageable damageable))
+            {
+                damageable.TakeDamage(weapon.weaponInfo.WeaponDamage);
+            }
+        }
+
+        currentAmmo--;
+    
+        yield return new WaitForSeconds(weapon.weaponInfo.AttackRate);
+        RpcWeaponEffects();
+        canAttack = true;
+    }
+
     [Command]
     private void CmdFireWeapon()
     {
-        StartCoroutine(weapon.FireWeapon());
+        StartCoroutine(FireWeapon());
+    }
+
+    [ClientRpc]
+    private void RpcWeaponEffects()
+    {
+        if (muzzleFlashObject.activeSelf.Equals(false))
+            muzzleFlashObject.SetActive(true);
+        else
+            muzzleFlashObject.SetActive(false);
     }
 
     private void ChangeWeapons()
     {
         var scrollInput = Input.GetAxis("Mouse ScrollWheel");
 
-        if (scrollInput > 0f)
-        {
-            selectedWeaponLocal += 1;
-            if (selectedWeaponLocal > weaponArray.Length-1) { selectedWeaponLocal = 0; }
-            CmdChangeActiveWeapon(selectedWeaponLocal);
-        }
-        else if (scrollInput < 0f)
-        {
-            selectedWeaponLocal -= 1;
-            if (selectedWeaponLocal < 0) { selectedWeaponLocal = 2; }
-            CmdChangeActiveWeapon(selectedWeaponLocal);
-        }
+        //if (scrollInput > 0f)
+        //{
+        //    selectedWeaponLocal += 1;
+        //    if (selectedWeaponLocal > weaponArray.Length-1) { selectedWeaponLocal = 0; }
+        //    CmdChangeActiveWeapon(selectedWeaponLocal);
+        //}
+        //else if (scrollInput < 0f)
+        //{
+        //    selectedWeaponLocal -= 1;
+        //    if (selectedWeaponLocal < 0) { selectedWeaponLocal = weaponArray.Length-1; }
+        //    CmdChangeActiveWeapon(selectedWeaponLocal);
+        //}
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
@@ -74,11 +116,6 @@ public class PlayerCombatController : NetworkBehaviour
             selectedWeaponLocal = 1;
             CmdChangeActiveWeapon(selectedWeaponLocal);
         }
-        else if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            selectedWeaponLocal = 2;
-            CmdChangeActiveWeapon(selectedWeaponLocal);
-        }
     }
 
     // Update is called once per frame
@@ -86,13 +123,29 @@ public class PlayerCombatController : NetworkBehaviour
     {
         //only our own player runs below here
         if (!isLocalPlayer) { return; }
-
-        ChangeWeapons();
         weapon.transform.LookAt(playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)));
+        ray = playerCamera.ScreenPointToRay(new Vector3(Screen.width/2,Screen.height/2,0));
+        ray.origin = firePoint.position;
+        Debug.DrawRay(ray.origin, ray.direction * weapon.weaponInfo.WeaponRange, Color.white);
+        //Debug.DrawRay(playerCamera.transform.position, playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)) , Color.red);
+        ChangeWeapons();
 
         if (Input.GetKey(KeyCode.Mouse0))
         {
             CmdFireWeapon();
         }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            StartCoroutine(ReloadWeapon());
+        }
+    }
+
+    private IEnumerator ReloadWeapon()
+    {
+        canAttack = false;
+        yield return new WaitForSeconds(weapon.weaponInfo.ReloadTime);
+        currentAmmo = weapon.weaponInfo.MaxAmmo;
+        canAttack = true;
     }
 }
