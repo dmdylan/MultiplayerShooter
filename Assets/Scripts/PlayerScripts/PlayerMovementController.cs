@@ -23,7 +23,6 @@ public class PlayerMovementController : NetworkBehaviour
 
 	//camera
 	float xRotation = 0f;
-	[SerializeField] private GameObject weaponHolster = null;
 	Camera playerCamera = null;
 
 	//Animator animator;
@@ -32,11 +31,6 @@ public class PlayerMovementController : NetworkBehaviour
 	public override void OnStartLocalPlayer()
 	{
 		base.OnStartLocalPlayer();
-		//Camera.main.transform.SetParent(transform);
-		//Camera.main.transform.localPosition = new Vector3(0, .7f, .1f);
-		//weaponHolster.transform.SetParent(Camera.main.transform);
-		//weaponHolster.transform.localPosition = new Vector3(.5f, -.4f, .5f);
-		//weaponHolster.transform.rotation = Quaternion.Euler(0, 0, 0);
 		controller = GetComponent<CharacterController>();
 		//animator = GetComponent<Animator>();
 	}

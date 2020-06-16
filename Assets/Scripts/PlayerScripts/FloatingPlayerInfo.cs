@@ -10,7 +10,6 @@ public class FloatingPlayerInfo : NetworkBehaviour
     [SerializeField] private TMP_Text playerNameText = null;
     [SerializeField] private GameObject floatingInfo = null;
     [SerializeField] private Slider healthBar = null;
-    [SerializeField] private GameObject floatingInfoLookPoint = null;
     private Material playerMaterialClone;
     private PlayerInfo player;
     private Camera playerCamera = null;

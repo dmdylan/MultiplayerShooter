@@ -18,8 +18,8 @@ public class PlayerCombatController : NetworkBehaviour
     private bool canAttack = true;
     private int currentAmmo = 0;
     private Ray ray;
-    [SerializeField] private Transform firePoint;
-    [SerializeField] private GameObject muzzleFlashObject;
+    [SerializeField] private Transform firePoint = null;
+    [SerializeField] private GameObject muzzleFlashObject = null;
 
     public override void OnStartLocalPlayer()
     {
@@ -49,6 +49,7 @@ public class PlayerCombatController : NetworkBehaviour
         activeWeaponSynced = currentLocalWeapon;
     }
 
+    //TODO: Only host has muzzle flash effect and can fire?
     private IEnumerator FireWeapon()
     {
         if (canAttack.Equals(false) || currentAmmo <= 0)
@@ -57,13 +58,16 @@ public class PlayerCombatController : NetworkBehaviour
         canAttack = false;
         RpcWeaponEffects();
 
-        if (Physics.Raycast(playerCamera.transform.position, ray.direction, out RaycastHit hit, weapon.weaponInfo.WeaponRange))
+        Debug.Log("Shot fired");
+        //TODO: Need to get the network id and apply damage at some point
+        //Network game even
+        if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, weapon.weaponInfo.WeaponRange))
         {
-            Debug.Log("Shot fired");
-            Debug.Log(hit.collider.name);
-            if (TryGetComponent(out IDamageable damageable))
+            Debug.Log($"Hit: {hit.collider.name}");
+            if (TryGetComponent(out PlayerEvents player) && !isLocalPlayer)
             {
-                damageable.TakeDamage(weapon.weaponInfo.WeaponDamage);
+                //damageable.TakeDamage(weapon.weaponInfo.WeaponDamage);
+                player.CmdTakeDamage(weapon.weaponInfo.WeaponDamage);
             }
         }
 
