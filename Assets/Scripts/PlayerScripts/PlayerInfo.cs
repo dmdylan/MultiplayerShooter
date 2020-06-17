@@ -13,8 +13,9 @@ public class PlayerInfo : NetworkBehaviour, IDamageable
     public float PlayerHealth => playerHealth;
     public float MaxHealth => maxHealth;
 
-    private void Start()
+    public override void OnStartLocalPlayer()
     {
+        base.OnStartLocalPlayer();
         playerEvents = GetComponent<PlayerEvents>();
         playerHealth = maxHealth;
     }

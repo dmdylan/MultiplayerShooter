@@ -32,24 +32,25 @@ public class PlayerMovementController : NetworkBehaviour
 	{
 		base.OnStartLocalPlayer();
 		controller = GetComponent<CharacterController>();
-		//animator = GetComponent<Animator>();
-	}
-
-	private void Start()
-	{
 		playerCamera = GetComponentInChildren<Camera>();
-		//if (!isLocalPlayer) { return; }
-
-		if (isLocalPlayer)
-		{
-			Cursor.lockState = CursorLockMode.Locked;
-			Cursor.visible = !Cursor.visible;
-		}
-		else
-		{
-			playerCamera.enabled = false;
-		}
+		//animator = GetComponent<Animator>();
+		Cursor.lockState = CursorLockMode.Locked;
+		Cursor.visible = !Cursor.visible;
 	}
+
+	//private void Start()
+	//{
+	//	//if (!isLocalPlayer) { return; }
+	//
+	//	if (isLocalPlayer)
+	//	{
+	//	}
+	//	else
+	//	{
+	//		playerCamera.enabled = false;
+	//		GetComponentInChildren<AudioListener>().enabled = false;
+	//	}
+	//}
 
 	void Update()
 	{

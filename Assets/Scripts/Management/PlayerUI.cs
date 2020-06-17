@@ -13,9 +13,9 @@ public class PlayerUI : NetworkBehaviour
     [SerializeField] private TMP_Text ammoCount = null;
     [SerializeField] private Image healthBar = null;
 
-    // Start is called before the first frame update
-    void Start()
+    public override void OnStartLocalPlayer()
     {
+        base.OnStartLocalPlayer();
         playerEvents = GetComponent<PlayerEvents>();
         playerInfo = GetComponent<PlayerInfo>();
         playerCombatController = GetComponent<PlayerCombatController>();
@@ -25,16 +25,19 @@ public class PlayerUI : NetworkBehaviour
 
     private void PlayerEvents_EventAmmoChangedEvent(int value)
     {
-        ammoCount.text = $"{value}/{playerCombatController.Weapon.weaponInfo.MaxAmmo}";
+        if(isLocalPlayer)
+            ammoCount.text = $"{value}/{playerCombatController.Weapon.weaponInfo.MaxAmmo}";
     }
 
     private void OnDisable()
     {
-        playerEvents.EventHealthChangedEvent -= PlayerEvents_EventHealthChangedEvent;
+        if(isLocalPlayer)
+            playerEvents.EventHealthChangedEvent -= PlayerEvents_EventHealthChangedEvent;
     }
 
     private void PlayerEvents_EventHealthChangedEvent(float currentHealth)
     {
-        healthBar.fillAmount = currentHealth / playerInfo.MaxHealth;
+        if(isLocalPlayer)
+            healthBar.fillAmount = currentHealth / playerInfo.MaxHealth;
     }
 }

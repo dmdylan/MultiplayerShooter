@@ -26,13 +26,9 @@ public class PlayerCombatController : NetworkBehaviour
     {
         base.OnStartLocalPlayer();
         playerCamera = GetComponentInChildren<Camera>();
+        playerEvents = GetComponent<PlayerEvents>();    
         Weapon = weaponArray[selectedWeaponLocal].GetComponent<Weapon>();
         CurrentAmmo = Weapon.weaponInfo.MaxAmmo;
-    }
-
-    private void Start()
-    {
-        playerEvents = GetComponent<PlayerEvents>();    
     }
 
     void OnWeaponChanged(int _old, int _new)
