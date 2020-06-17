@@ -27,7 +27,7 @@ public class PlayerInfo : NetworkBehaviour, IDamageable
             playerHealth -= damageAmount;
         Debug.Log(playerHealth);
 
-        playerEvents.CmdUpdateUIElements();
+        playerEvents.CmdHealthChangedEvent(playerHealth);
     }
 
     private void PlayerDeath()

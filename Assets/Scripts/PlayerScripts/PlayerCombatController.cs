@@ -12,21 +12,27 @@ public class PlayerCombatController : NetworkBehaviour
     [SyncVar(hook = nameof(OnWeaponChanged))]
     private int activeWeaponSynced;
 
+    private PlayerEvents playerEvents = null;
     private Camera playerCamera = null;
-
-    private Weapon weapon;
     private bool canAttack = true;
-    private int currentAmmo = 0;
     private Ray ray;
     [SerializeField] private Transform firePoint = null;
     [SerializeField] private GameObject muzzleFlashObject = null;
+
+    public int CurrentAmmo { get; private set; } = 0;
+    public Weapon Weapon { get; private set; }
 
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
         playerCamera = GetComponentInChildren<Camera>();
-        weapon = weaponArray[selectedWeaponLocal].GetComponent<Weapon>();
-        currentAmmo = weapon.weaponInfo.MaxAmmo;
+        Weapon = weaponArray[selectedWeaponLocal].GetComponent<Weapon>();
+        CurrentAmmo = Weapon.weaponInfo.MaxAmmo;
+    }
+
+    private void Start()
+    {
+        playerEvents = GetComponent<PlayerEvents>();    
     }
 
     void OnWeaponChanged(int _old, int _new)
@@ -39,7 +45,7 @@ public class PlayerCombatController : NetworkBehaviour
         if (_new < weaponArray.Length && weaponArray[_new] != null)
         {
             weaponArray[_new].SetActive(true);
-            weapon = weaponArray[_new].GetComponent<Weapon>();
+            Weapon = weaponArray[_new].GetComponent<Weapon>();
         }
     }
 
@@ -52,7 +58,7 @@ public class PlayerCombatController : NetworkBehaviour
     //TODO: Only host has muzzle flash effect and can fire? ---Appears as only host can shoot 
     private IEnumerator FireWeapon()
     {
-        if (canAttack.Equals(false) || currentAmmo <= 0)
+        if (canAttack.Equals(false) || CurrentAmmo <= 0)
             yield break;
 
         canAttack = false;
@@ -61,24 +67,30 @@ public class PlayerCombatController : NetworkBehaviour
         Debug.Log("Shot fired");
         //TODO: Need to get the network id and apply damage at some point?
         //Network game event?
-        if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, weapon.weaponInfo.WeaponRange))
+        if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, Weapon.weaponInfo.WeaponRange))
         {
             Debug.Log($"Hit: {hit.collider.name}");
             var playerObject = hit.collider.gameObject.GetComponent<PlayerInfo>();
             if (playerObject)
             {
-                Debug.Log("damaging pipe");
-               playerObject.TakeDamage(weapon.weaponInfo.WeaponDamage);
+               Debug.Log("damaging pipe");
+               playerObject.TakeDamage(Weapon.weaponInfo.WeaponDamage);
                //player.CmdTakeDamage(weapon.weaponInfo.WeaponDamage);
                //player.CmdUpdateUIElements();
             }
         }
 
-        currentAmmo--;
-    
-        yield return new WaitForSeconds(weapon.weaponInfo.AttackRate);
+        ReduceAmmo();
+
+        yield return new WaitForSeconds(Weapon.weaponInfo.AttackRate);
         RpcWeaponEffects();
         canAttack = true;
+    }
+
+    void ReduceAmmo()
+    {
+        CurrentAmmo--;
+        playerEvents.CmdAmmoChangedEvent(CurrentAmmo);
     }
 
     [Command]
@@ -130,7 +142,7 @@ public class PlayerCombatController : NetworkBehaviour
     {
         if (isLocalPlayer)
         {
-            weapon.transform.LookAt(playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)));
+            Weapon.transform.LookAt(playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)));
             ray = playerCamera.ScreenPointToRay(new Vector3(Screen.width/2,Screen.height/2,0));
             ray.origin = firePoint.position;
 
@@ -151,8 +163,9 @@ public class PlayerCombatController : NetworkBehaviour
     private IEnumerator ReloadWeapon()
     {
         canAttack = false;
-        yield return new WaitForSeconds(weapon.weaponInfo.ReloadTime);
-        currentAmmo = weapon.weaponInfo.MaxAmmo;
+        yield return new WaitForSeconds(Weapon.weaponInfo.ReloadTime);
+        CurrentAmmo = Weapon.weaponInfo.MaxAmmo;
+        playerEvents.CmdAmmoChangedEvent(CurrentAmmo);
         canAttack = true;
     }
 }

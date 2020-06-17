@@ -7,14 +7,16 @@ using UnityEngine.Rendering;
 
 public class PlayerEvents : NetworkBehaviour
 {
-   //public delegate void OnTakeDamageDelegate(float value);
-   //[SyncEvent]
-   //public event OnTakeDamageDelegate EventOnTakeDamage;
-   //[Command]
-   //public void CmdTakeDamage(float value) => EventOnTakeDamage?.Invoke(value);
-
+    public delegate void FloatChangeDelegate(float value);
     [SyncEvent]
-    public event Action EventUpdateUIElements;
+    public event FloatChangeDelegate EventHealthChangedEvent;
     [Command]
-    public void CmdUpdateUIElements() => EventUpdateUIElements?.Invoke();
+    public void CmdHealthChangedEvent(float value) => EventHealthChangedEvent?.Invoke(value);
+
+
+    public delegate void IntChangeDelegate(int value);
+    [SyncEvent]
+    public event IntChangeDelegate EventAmmoChangedEvent;
+    [Command]
+    public void CmdAmmoChangedEvent(int value) => EventAmmoChangedEvent?.Invoke(value);
 }

@@ -13,7 +13,6 @@ public class FloatingPlayerInfo : NetworkBehaviour
     private Material playerMaterialClone;
     private PlayerInfo player;
     [SerializeField] private Camera playerCamera = null;
-    private PlayerEvents playerEvents = null;
 
     [SyncVar(hook = nameof(OnNameChanged))]
     private string playerName;
@@ -56,12 +55,6 @@ public class FloatingPlayerInfo : NetworkBehaviour
     public void CmdUpdateHealthBar()
     {
         healthBar.value = player.PlayerHealth / player.MaxHealth;
-    }
-
-    private void Start()
-    {
-        playerEvents = GetComponent<PlayerEvents>();
-        playerEvents.EventUpdateUIElements += CmdUpdateHealthBar;
     }
 
     //Update is called once per frame
