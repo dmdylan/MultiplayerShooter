@@ -49,7 +49,7 @@ public class PlayerCombatController : NetworkBehaviour
         activeWeaponSynced = currentLocalWeapon;
     }
 
-    //TODO: Only host has muzzle flash effect and can fire?
+    //TODO: Only host has muzzle flash effect and can fire? ---Appears as only host can shoot 
     private IEnumerator FireWeapon()
     {
         if (canAttack.Equals(false) || currentAmmo <= 0)
@@ -59,15 +59,18 @@ public class PlayerCombatController : NetworkBehaviour
         RpcWeaponEffects();
 
         Debug.Log("Shot fired");
-        //TODO: Need to get the network id and apply damage at some point
-        //Network game even
+        //TODO: Need to get the network id and apply damage at some point?
+        //Network game event?
         if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, weapon.weaponInfo.WeaponRange))
         {
             Debug.Log($"Hit: {hit.collider.name}");
-            if (TryGetComponent(out PlayerEvents player) && !isLocalPlayer)
+            var playerObject = hit.collider.gameObject.GetComponent<PlayerInfo>();
+            if (playerObject)
             {
-                //damageable.TakeDamage(weapon.weaponInfo.WeaponDamage);
-                player.CmdTakeDamage(weapon.weaponInfo.WeaponDamage);
+                Debug.Log("damaging pipe");
+               playerObject.TakeDamage(weapon.weaponInfo.WeaponDamage);
+               //player.CmdTakeDamage(weapon.weaponInfo.WeaponDamage);
+               //player.CmdUpdateUIElements();
             }
         }
 
@@ -125,23 +128,23 @@ public class PlayerCombatController : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        //only our own player runs below here
-        if (!isLocalPlayer) { return; }
-        weapon.transform.LookAt(playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)));
-        ray = playerCamera.ScreenPointToRay(new Vector3(Screen.width/2,Screen.height/2,0));
-        ray.origin = firePoint.position;
-        Debug.DrawRay(ray.origin, ray.direction * weapon.weaponInfo.WeaponRange, Color.white);
-        //Debug.DrawRay(playerCamera.transform.position, playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)) , Color.red);
-        ChangeWeapons();
-
-        if (Input.GetKey(KeyCode.Mouse0))
+        if (isLocalPlayer)
         {
-            CmdFireWeapon();
-        }
+            weapon.transform.LookAt(playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)));
+            ray = playerCamera.ScreenPointToRay(new Vector3(Screen.width/2,Screen.height/2,0));
+            ray.origin = firePoint.position;
 
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            StartCoroutine(ReloadWeapon());
+            ChangeWeapons();
+
+            if (Input.GetKey(KeyCode.Mouse0))
+            {
+                CmdFireWeapon();
+            }
+
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                StartCoroutine(ReloadWeapon());
+            }
         }
     }
 

@@ -12,7 +12,8 @@ public class FloatingPlayerInfo : NetworkBehaviour
     [SerializeField] private Slider healthBar = null;
     private Material playerMaterialClone;
     private PlayerInfo player;
-    private Camera playerCamera = null;
+    [SerializeField] private Camera playerCamera = null;
+    private PlayerEvents playerEvents = null;
 
     [SyncVar(hook = nameof(OnNameChanged))]
     private string playerName;
@@ -51,11 +52,16 @@ public class FloatingPlayerInfo : NetworkBehaviour
         playerColor = _col;
     }
 
-    //TODO: Can setup an event that calls this command when it is triggered
     [Command]
     public void CmdUpdateHealthBar()
     {
         healthBar.value = player.PlayerHealth / player.MaxHealth;
+    }
+
+    private void Start()
+    {
+        playerEvents = GetComponent<PlayerEvents>();
+        playerEvents.EventUpdateUIElements += CmdUpdateHealthBar;
     }
 
     //Update is called once per frame
@@ -70,8 +76,6 @@ public class FloatingPlayerInfo : NetworkBehaviour
 
         if (!isLocalPlayer)
             return;
-
-        CmdUpdateHealthBar();
     }
 
     private void OnDestroy()
