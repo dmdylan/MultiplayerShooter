@@ -24,6 +24,8 @@ public class PlayerMovementController : NetworkBehaviour
 	//camera
 	float xRotation = 0f;
 	Camera playerCamera = null;
+	Vector3 offSet = new Vector3(0f, .7f, 0f);
+	//[SerializeField] Transform weaponHolster = null;
 
 	//Animator animator;
 	CharacterController controller;
@@ -32,7 +34,9 @@ public class PlayerMovementController : NetworkBehaviour
 	{
 		base.OnStartLocalPlayer();
 		controller = GetComponent<CharacterController>();
-		playerCamera = GetComponentInChildren<Camera>();
+		playerCamera = Camera.main;
+		playerCamera.transform.SetParent(transform);
+		playerCamera.transform.localPosition = offSet;
 		//animator = GetComponent<Animator>();
 		Cursor.lockState = CursorLockMode.Locked;
 		Cursor.visible = !Cursor.visible;

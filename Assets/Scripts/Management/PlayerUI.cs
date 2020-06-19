@@ -1,43 +1,31 @@
-﻿using Mirror;
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-using Mirror.Examples;
+using Mirror;
 using Mirror.Examples.Basic;
 
 public class PlayerUI : NetworkBehaviour
 {
-    private PlayerEvents playerEvents = null;
-    private PlayerInfo playerInfo = null;
-    private PlayerCombatController playerCombatController = null;
+    private PlayerCombatController playerCombatController;
+    private PlayerInfo playerInfo;
     [SerializeField] private TMP_Text ammoCount = null;
     [SerializeField] private Image healthBar = null;
 
-    public override void OnStartLocalPlayer()
+    private void Awake()
     {
-        base.OnStartLocalPlayer();
-        playerEvents = GetComponent<PlayerEvents>();
-        playerInfo = GetComponent<PlayerInfo>();
+        if(!isLocalPlayer) { return; }
+
         playerCombatController = GetComponent<PlayerCombatController>();
-        playerEvents.EventHealthChangedEvent += PlayerEvents_EventHealthChangedEvent;
-        playerEvents.EventAmmoChangedEvent += PlayerEvents_EventAmmoChangedEvent;
+        playerInfo = GetComponent<PlayerInfo>();
     }
 
-    private void PlayerEvents_EventAmmoChangedEvent(int value)
+    public void UpdatePlayerHP(float current, float max)
     {
-        if(isLocalPlayer)
-            ammoCount.text = $"{value}/{playerCombatController.Weapon.weaponInfo.MaxAmmo}";
+        healthBar.fillAmount = current / max;
     }
 
-    private void OnDisable()
+    public void UpdatePlayerAmmo(int current, int max)
     {
-        if(isLocalPlayer)
-            playerEvents.EventHealthChangedEvent -= PlayerEvents_EventHealthChangedEvent;
-    }
-
-    private void PlayerEvents_EventHealthChangedEvent(float currentHealth)
-    {
-        if(isLocalPlayer)
-            healthBar.fillAmount = currentHealth / playerInfo.MaxHealth;
+        ammoCount.text = $"{current}/{max}";
     }
 }

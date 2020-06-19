@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using Mirror.Examples.Basic;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -12,11 +13,14 @@ public class PlayerCombatController : NetworkBehaviour
     [SyncVar(hook = nameof(OnWeaponChanged))]
     private int activeWeaponSynced;
 
-    private PlayerEvents playerEvents = null;
+    private PlayerUI playerUI;
     private Camera playerCamera = null;
     private bool canAttack = true;
+    private bool isReloading = false;
+    private float timeBetweenAttacks = 0f;
     private Ray ray;
     [SerializeField] private Transform firePoint = null;
+    [SerializeField] private GameObject weaponHolster = null;
     [SerializeField] private GameObject muzzleFlashObject = null;
 
     public int CurrentAmmo { get; private set; } = 0;
@@ -25,10 +29,12 @@ public class PlayerCombatController : NetworkBehaviour
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
-        playerCamera = GetComponentInChildren<Camera>();
-        playerEvents = GetComponent<PlayerEvents>();    
+        playerCamera = Camera.main;
+        weaponHolster.transform.SetParent(playerCamera.transform);
+        weaponHolster.transform.localPosition = new Vector3(.35f, -.25f, .4f);
         Weapon = weaponArray[selectedWeaponLocal].GetComponent<Weapon>();
         CurrentAmmo = Weapon.weaponInfo.MaxAmmo;
+        playerUI = GetComponent<PlayerUI>();
     }
 
     void OnWeaponChanged(int _old, int _new)
@@ -51,57 +57,70 @@ public class PlayerCombatController : NetworkBehaviour
         activeWeaponSynced = currentLocalWeapon;
     }
 
-    //TODO: Only host has muzzle flash effect and can fire? ---Appears as only host can shoot 
-    private IEnumerator FireWeapon()
+    private void Shoot()
     {
-        if (canAttack.Equals(false) || CurrentAmmo <= 0)
-            yield break;
+        if(canAttack == true && CurrentAmmo > 0)
+        {
+            CmdShoot();
+            timeBetweenAttacks = Weapon.weaponInfo.AttackRate;
+            RpcWeaponEffects();
+        }
+    }
 
-        canAttack = false;
-        RpcWeaponEffects();
+    [Command]
+    private void CmdShoot()
+    {
+        ReduceAmmo();
+        //RpcWeaponEffects();
 
-        Debug.Log("Shot fired");
-        //TODO: Need to get the network id and apply damage at some point?
-        //Network game event?
         if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, Weapon.weaponInfo.WeaponRange))
         {
-            Debug.Log($"Hit: {hit.collider.name}");
             var playerObject = hit.collider.gameObject.GetComponent<PlayerInfo>();
             if (playerObject)
             {
-               Debug.Log("damaging pipe");
-               playerObject.TakeDamage(Weapon.weaponInfo.WeaponDamage);
-               //player.CmdTakeDamage(weapon.weaponInfo.WeaponDamage);
-               //player.CmdUpdateUIElements();
+                playerObject.TargetTakeDamage(Weapon.weaponInfo.WeaponDamage);
             }
         }
 
-        ReduceAmmo();
-
-        yield return new WaitForSeconds(Weapon.weaponInfo.AttackRate);
-        RpcWeaponEffects();
-        canAttack = true;
+        //RpcWeaponEffects();
     }
+
+    //TODO: Only host has muzzle flash effect and can fire? ---Appears as only host can shoot 
+    //private IEnumerator FireWeapon()
+    //{
+    //    if (canAttack.Equals(false) || CurrentAmmo <= 0)
+    //        yield break;
+    //
+    //    canAttack = false;
+    //    RpcWeaponEffects();
+    //
+    //    //TODO: Need to get the network id and apply damage at some point?
+    //    if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, Weapon.weaponInfo.WeaponRange))
+    //    {
+    //        var playerObject = hit.collider.gameObject.GetComponent<PlayerInfo>();
+    //        if (playerObject)
+    //        {
+    //           playerObject.TargetTakeDamage(Weapon.weaponInfo.WeaponDamage);
+    //        }
+    //    }
+    //
+    //    ReduceAmmo();
+    //
+    //    yield return new WaitForSeconds(Weapon.weaponInfo.AttackRate);
+    //    RpcWeaponEffects();
+    //    canAttack = true;
+    //}
 
     void ReduceAmmo()
     {
         CurrentAmmo--;
-        playerEvents.CmdAmmoChangedEvent(CurrentAmmo);
-    }
-
-    [Command]
-    private void CmdFireWeapon()
-    {
-        StartCoroutine(FireWeapon());
+        playerUI.UpdatePlayerAmmo(CurrentAmmo, Weapon.weaponInfo.MaxAmmo);
     }
 
     [ClientRpc]
     private void RpcWeaponEffects()
     {
-        if (muzzleFlashObject.activeSelf.Equals(false))
-            muzzleFlashObject.SetActive(true);
-        else
-            muzzleFlashObject.SetActive(false);
+        muzzleFlashObject.SetActive(true);
     }
 
     private void ChangeWeapons()
@@ -138,7 +157,7 @@ public class PlayerCombatController : NetworkBehaviour
     {
         if (isLocalPlayer)
         {
-            Weapon.transform.LookAt(playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)));
+            weaponHolster.transform.LookAt(playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)));
             ray = playerCamera.ScreenPointToRay(new Vector3(Screen.width/2,Screen.height/2,0));
             ray.origin = firePoint.position;
 
@@ -146,22 +165,34 @@ public class PlayerCombatController : NetworkBehaviour
 
             if (Input.GetKey(KeyCode.Mouse0))
             {
-                CmdFireWeapon();
+                Shoot();
             }
 
-            if (Input.GetKeyDown(KeyCode.R))
+            if (Input.GetKeyDown(KeyCode.R) && isReloading.Equals(false))
             {
-                StartCoroutine(ReloadWeapon());
+                StartCoroutine(TargetReloadWeapon());
+            }
+
+            if(timeBetweenAttacks >= 0)
+            {
+                canAttack = false;
+                timeBetweenAttacks -= Time.deltaTime;
+            }
+            else
+            {
+                canAttack = true;
+                muzzleFlashObject.SetActive(false);
             }
         }
     }
 
-    private IEnumerator ReloadWeapon()
+    [Client]
+    private IEnumerator TargetReloadWeapon()
     {
-        canAttack = false;
+        isReloading = true;
         yield return new WaitForSeconds(Weapon.weaponInfo.ReloadTime);
         CurrentAmmo = Weapon.weaponInfo.MaxAmmo;
-        playerEvents.CmdAmmoChangedEvent(CurrentAmmo);
-        canAttack = true;
+        playerUI.UpdatePlayerAmmo(CurrentAmmo, Weapon.weaponInfo.MaxAmmo);
+        isReloading = false;
     }
 }

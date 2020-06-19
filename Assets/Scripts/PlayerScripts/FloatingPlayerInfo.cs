@@ -12,7 +12,7 @@ public class FloatingPlayerInfo : NetworkBehaviour
     [SerializeField] private Slider healthBar = null;
     private Material playerMaterialClone;
     private PlayerInfo player;
-    [SerializeField] private Camera playerCamera = null;
+    private Camera playerCamera = null;
 
     [SyncVar(hook = nameof(OnNameChanged))]
     private string playerName;
@@ -38,7 +38,7 @@ public class FloatingPlayerInfo : NetworkBehaviour
     public override void OnStartLocalPlayer()
     {
         player = GetComponent<PlayerInfo>();
-        playerCamera = GetComponentInChildren<Camera>();
+        playerCamera = Camera.main;
         CmdSetupPlayer("Player" + Random.Range(100, 999), new Color(Random.Range(0f, 1f),
         Random.Range(0f, 1f), Random.Range(0f, 1f)));
     }
@@ -63,8 +63,8 @@ public class FloatingPlayerInfo : NetworkBehaviour
         //allow all players to run this
         if (isLocalPlayer == false)
         {
-            floatingInfo.transform.LookAt(playerCamera.transform);
-            healthBar.transform.LookAt(playerCamera.transform);
+            floatingInfo.transform.LookAt(Camera.main.transform);
+            healthBar.transform.LookAt(Camera.main.transform);
         }
 
         if (!isLocalPlayer)

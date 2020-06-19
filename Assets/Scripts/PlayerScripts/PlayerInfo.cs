@@ -8,7 +8,7 @@ public class PlayerInfo : NetworkBehaviour, IDamageable
 
     [SerializeField] private float maxHealth = 0;
 
-    private PlayerEvents playerEvents = null;
+    private PlayerUI playerUI;
 
     public float PlayerHealth => playerHealth;
     public float MaxHealth => maxHealth;
@@ -16,19 +16,22 @@ public class PlayerInfo : NetworkBehaviour, IDamageable
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
-        playerEvents = GetComponent<PlayerEvents>();
+        playerUI = GetComponent<PlayerUI>();
         playerHealth = maxHealth;
     }
 
-    public void TakeDamage(float damageAmount)
+    [TargetRpc]
+    public void TargetTakeDamage(float damageAmount)
     {
         if (playerHealth - damageAmount <= 0)
+        {
+            playerHealth = 0;
             PlayerDeath();
+        }
         else
             playerHealth -= damageAmount;
-        Debug.Log(playerHealth);
 
-        playerEvents.CmdHealthChangedEvent(playerHealth);
+        playerUI.UpdatePlayerHP(playerHealth, MaxHealth); 
     }
 
     private void PlayerDeath()
