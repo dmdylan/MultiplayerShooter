@@ -11,9 +11,9 @@ public class PlayerUI : NetworkBehaviour
     [SerializeField] private TMP_Text ammoCount = null;
     [SerializeField] private Image healthBar = null;
 
-    private void Awake()
+    public override void OnStartAuthority()
     {
-        if(!isLocalPlayer) { return; }
+        base.OnStartAuthority();
 
         playerCombatController = GetComponent<PlayerCombatController>();
         playerInfo = GetComponent<PlayerInfo>();

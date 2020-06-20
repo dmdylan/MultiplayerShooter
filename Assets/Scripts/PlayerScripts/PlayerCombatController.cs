@@ -22,18 +22,20 @@ public class PlayerCombatController : NetworkBehaviour
     [SerializeField] private Transform firePoint = null;
     [SerializeField] private GameObject weaponHolster = null;
     [SerializeField] private GameObject muzzleFlashObject = null;
+    private ParticleSystem muzzleFlash;
 
     public int CurrentAmmo { get; private set; } = 0;
     public Weapon Weapon { get; private set; }
 
-    public override void OnStartLocalPlayer()
+    public override void OnStartAuthority()
     {
-        base.OnStartLocalPlayer();
+        base.OnStartAuthority();
         playerCamera = Camera.main;
         weaponHolster.transform.SetParent(playerCamera.transform);
         weaponHolster.transform.localPosition = new Vector3(.35f, -.25f, .4f);
         Weapon = weaponArray[selectedWeaponLocal].GetComponent<Weapon>();
         CurrentAmmo = Weapon.weaponInfo.MaxAmmo;
+        muzzleFlash = Weapon.GetComponentInChildren<ParticleSystem>();
         playerUI = GetComponent<PlayerUI>();
     }
 
@@ -63,7 +65,6 @@ public class PlayerCombatController : NetworkBehaviour
         {
             CmdShoot();
             timeBetweenAttacks = Weapon.weaponInfo.AttackRate;
-            RpcWeaponEffects();
         }
     }
 
@@ -71,7 +72,6 @@ public class PlayerCombatController : NetworkBehaviour
     private void CmdShoot()
     {
         ReduceAmmo();
-        //RpcWeaponEffects();
 
         if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, Weapon.weaponInfo.WeaponRange))
         {
@@ -82,7 +82,7 @@ public class PlayerCombatController : NetworkBehaviour
             }
         }
 
-        //RpcWeaponEffects();
+        RpcWeaponEffects();    
     }
 
     //TODO: Only host has muzzle flash effect and can fire? ---Appears as only host can shoot 
@@ -163,7 +163,7 @@ public class PlayerCombatController : NetworkBehaviour
 
             ChangeWeapons();
 
-            if (Input.GetKey(KeyCode.Mouse0))
+            if (Input.GetKey(KeyCode.Mouse0) && hasAuthority)
             {
                 Shoot();
             }
