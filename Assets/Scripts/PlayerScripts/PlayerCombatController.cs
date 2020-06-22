@@ -7,12 +7,6 @@ using UnityEngine.UIElements;
 
 public class PlayerCombatController : NetworkBehaviour
 {
-    [SerializeField] private GameObject[] weaponArray = null;
-    private int selectedWeaponLocal = 0;
-
-    [SyncVar(hook = nameof(OnWeaponChanged))]
-    private int activeWeaponSynced;
-
     private PlayerUI playerUI;
     private Camera playerCamera = null;
     private bool canAttack = true;
@@ -33,30 +27,14 @@ public class PlayerCombatController : NetworkBehaviour
         playerCamera = Camera.main;
         weaponHolster.transform.SetParent(playerCamera.transform);
         weaponHolster.transform.localPosition = new Vector3(.35f, -.25f, .4f);
-        Weapon = weaponArray[selectedWeaponLocal].GetComponent<Weapon>();
-        CurrentAmmo = Weapon.weaponInfo.MaxAmmo;
-        muzzleFlash = Weapon.GetComponentInChildren<ParticleSystem>();
         playerUI = GetComponent<PlayerUI>();
     }
 
-    void OnWeaponChanged(int _old, int _new)
+    private void Start()
     {
-        activeWeaponSynced = _new;
-        foreach (var item in weaponArray)
-        {
-            if (item != null) { item.SetActive(false); }
-        }
-        if (_new < weaponArray.Length && weaponArray[_new] != null)
-        {
-            weaponArray[_new].SetActive(true);
-            Weapon = weaponArray[_new].GetComponent<Weapon>();
-        }
-    }
-
-    [Command]
-    public void CmdChangeActiveWeapon(int currentLocalWeapon)
-    {
-        activeWeaponSynced = currentLocalWeapon;
+        Weapon = GetComponentInChildren<Weapon>();
+        CurrentAmmo = Weapon.weaponInfo.MaxAmmo;
+        muzzleFlash = Weapon.GetComponentInChildren<ParticleSystem>();
     }
 
     private void Shoot()
@@ -78,7 +56,7 @@ public class PlayerCombatController : NetworkBehaviour
             var playerObject = hit.collider.gameObject.GetComponent<PlayerInfo>();
             if (playerObject)
             {
-                playerObject.TargetTakeDamage(Weapon.weaponInfo.WeaponDamage);
+                playerObject.CmdTakeDamage(Weapon.weaponInfo.WeaponDamage);
             }
         }
 
@@ -123,35 +101,6 @@ public class PlayerCombatController : NetworkBehaviour
         muzzleFlashObject.SetActive(true);
     }
 
-    private void ChangeWeapons()
-    {
-        var scrollInput = Input.GetAxis("Mouse ScrollWheel");
-
-        //if (scrollInput > 0f)
-        //{
-        //    selectedWeaponLocal += 1;
-        //    if (selectedWeaponLocal > weaponArray.Length-1) { selectedWeaponLocal = 0; }
-        //    CmdChangeActiveWeapon(selectedWeaponLocal);
-        //}
-        //else if (scrollInput < 0f)
-        //{
-        //    selectedWeaponLocal -= 1;
-        //    if (selectedWeaponLocal < 0) { selectedWeaponLocal = weaponArray.Length-1; }
-        //    CmdChangeActiveWeapon(selectedWeaponLocal);
-        //}
-
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            selectedWeaponLocal = 0;
-            CmdChangeActiveWeapon(selectedWeaponLocal);
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            selectedWeaponLocal = 1;
-            CmdChangeActiveWeapon(selectedWeaponLocal);
-        }
-    }
-
     // Update is called once per frame
     void Update()
     {
@@ -160,8 +109,6 @@ public class PlayerCombatController : NetworkBehaviour
             weaponHolster.transform.LookAt(playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)));
             ray = playerCamera.ScreenPointToRay(new Vector3(Screen.width/2,Screen.height/2,0));
             ray.origin = firePoint.position;
-
-            ChangeWeapons();
 
             if (Input.GetKey(KeyCode.Mouse0) && hasAuthority)
             {

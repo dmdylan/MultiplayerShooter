@@ -20,8 +20,16 @@ public class PlayerInfo : NetworkBehaviour, IDamageable
         playerHealth = maxHealth;
     }
 
+    //TODO: Move take damage logic to normal method and then call that method through a command and
+    //send info back through TargetRPC
+    [Command]
+    public void CmdTakeDamage(float damageAmount)
+    {
+        TargetTakeDamage(damageAmount);
+    }
+
     [TargetRpc]
-    public void TargetTakeDamage(float damageAmount)
+    private void TargetTakeDamage(float damageAmount)
     {
         if (playerHealth - damageAmount <= 0)
         {

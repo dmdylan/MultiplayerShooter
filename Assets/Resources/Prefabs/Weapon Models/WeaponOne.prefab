@@ -327,7 +327,7 @@ MonoBehaviour:
   weaponInfo: {fileID: 11400000, guid: 96abf018537813e49bd83461359956d2, type: 2}
   locationHitMark: {fileID: 0}
   locationHitMarkSprite: {fileID: 0}
-  muzzleFlashObject: {fileID: 3524960710569003856, guid: e6f4bb8019f098d4493aa8ba6341c0aa,
+  muzzleFlashObject: {fileID: 3524960710569003858, guid: e6f4bb8019f098d4493aa8ba6341c0aa,
     type: 3}
 --- !u!1 &8326237075947054255
 GameObject:
