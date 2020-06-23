@@ -39,18 +39,17 @@ public class PlayerCombatController : NetworkBehaviour
 
     private void Shoot()
     {
-        if(canAttack == true && CurrentAmmo > 0)
+        if(canAttack == true && CurrentAmmo > 0 && hasAuthority)
         {
             CmdShoot();
             timeBetweenAttacks = Weapon.weaponInfo.AttackRate;
+            ReduceAmmo();
         }
     }
 
     [Command]
     private void CmdShoot()
     {
-        ReduceAmmo();
-
         if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, Weapon.weaponInfo.WeaponRange))
         {
             var playerObject = hit.collider.gameObject.GetComponent<PlayerInfo>();
@@ -118,6 +117,11 @@ public class PlayerCombatController : NetworkBehaviour
             if (Input.GetKeyDown(KeyCode.R) && isReloading.Equals(false))
             {
                 StartCoroutine(TargetReloadWeapon());
+            }
+
+            if (Input.GetKeyDown(KeyCode.F))
+            {
+                GetComponent<PlayerInfo>().CmdTakeDamage(10);
             }
 
             if(timeBetweenAttacks >= 0)
