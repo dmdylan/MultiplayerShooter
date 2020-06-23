@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using Mirror.Examples.Basic;
 using UnityEngine;
 
 public class PlayerInfo : NetworkBehaviour, IDamageable
@@ -45,9 +46,15 @@ public class PlayerInfo : NetworkBehaviour, IDamageable
     }
 
     [TargetRpc]
-    private void TargetTakeDamage(float damageAmount)
+    public void TargetTakeDamage(NetworkConnection targetPlayer, float damageAmount)
     {
-
+        if (playerHealth - damageAmount <= 0)
+        {
+            playerHealth = 0;
+            PlayerDeath();
+        }
+        else
+            playerHealth -= damageAmount;
         playerUI.UpdatePlayerHP(playerHealth, MaxHealth); 
     }
 

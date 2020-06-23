@@ -3,6 +3,7 @@ using Mirror.Examples.Basic;
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Networking.Types;
 using UnityEngine.UIElements;
 
 public class PlayerCombatController : NetworkBehaviour
@@ -55,7 +56,8 @@ public class PlayerCombatController : NetworkBehaviour
             var playerObject = hit.collider.gameObject.GetComponent<PlayerInfo>();
             if (playerObject)
             {
-                playerObject.CmdTakeDamage(Weapon.weaponInfo.WeaponDamage);
+                //TODO: Working but only for host I think?
+                playerObject.TargetTakeDamage(playerObject.netIdentity.connectionToClient, Weapon.weaponInfo.WeaponDamage);
             }
         }
 
