@@ -19,7 +19,8 @@ public class PlayerCombatController : NetworkBehaviour
     [SerializeField] private GameObject muzzleFlashObject = null;
     private ParticleSystem muzzleFlash;
 
-    public int CurrentAmmo { get; private set; } = 0;
+    [SyncVar]
+    private int currentAmmo = 0;
     public Weapon Weapon { get; private set; }
 
     public override void OnStartAuthority()
@@ -34,66 +35,47 @@ public class PlayerCombatController : NetworkBehaviour
     private void Start()
     {
         Weapon = GetComponentInChildren<Weapon>();
-        CurrentAmmo = Weapon.weaponInfo.MaxAmmo;
+        currentAmmo = Weapon.weaponInfo.MaxAmmo;
         muzzleFlash = Weapon.GetComponentInChildren<ParticleSystem>();
     }
 
     private void Shoot()
     {
-        if(canAttack == true && CurrentAmmo > 0 && hasAuthority)
+        CmdReduceAmmo();
+        Debug.Log("Shoot command sent");
+        if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, Weapon.weaponInfo.WeaponRange))
         {
-            CmdShoot();
-            timeBetweenAttacks = Weapon.weaponInfo.AttackRate;
-            ReduceAmmo();
+            Debug.Log("Raycast fired");
+            var playerObject = hit.collider.gameObject.GetComponent<PlayerInfo>();
+            if (playerObject)
+            {
+                var networkConnection = playerObject.netIdentity;
+                //TODO: Working but only for host I think?
+                //Need to make this part a command to call a targetrpc ?
+                CmdShoot(networkConnection);
+                Debug.Log(playerObject.gameObject.GetInstanceID());
+            }
         }
     }
 
     [Command]
-    private void CmdShoot()
+    private void CmdShoot(NetworkIdentity playerObject)
     {
-        if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, Weapon.weaponInfo.WeaponRange))
-        {
-            var playerObject = hit.collider.gameObject.GetComponent<PlayerInfo>();
-            if (playerObject)
-            {
-                //TODO: Working but only for host I think?
-                playerObject.TargetTakeDamage(playerObject.netIdentity.connectionToClient, Weapon.weaponInfo.WeaponDamage);
-            }
-        }
-
+        playerObject.GetComponent<PlayerInfo>().TargetTakeDamage(playerObject.connectionToClient, Weapon.weaponInfo.WeaponDamage);
         RpcWeaponEffects();    
     }
 
-    //TODO: Only host has muzzle flash effect and can fire? ---Appears as only host can shoot 
-    //private IEnumerator FireWeapon()
-    //{
-    //    if (canAttack.Equals(false) || CurrentAmmo <= 0)
-    //        yield break;
-    //
-    //    canAttack = false;
-    //    RpcWeaponEffects();
-    //
-    //    //TODO: Need to get the network id and apply damage at some point?
-    //    if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, Weapon.weaponInfo.WeaponRange))
-    //    {
-    //        var playerObject = hit.collider.gameObject.GetComponent<PlayerInfo>();
-    //        if (playerObject)
-    //        {
-    //           playerObject.TargetTakeDamage(Weapon.weaponInfo.WeaponDamage);
-    //        }
-    //    }
-    //
-    //    ReduceAmmo();
-    //
-    //    yield return new WaitForSeconds(Weapon.weaponInfo.AttackRate);
-    //    RpcWeaponEffects();
-    //    canAttack = true;
-    //}
-
-    void ReduceAmmo()
+    [Command]
+    private void CmdReduceAmmo()
     {
-        CurrentAmmo--;
-        playerUI.UpdatePlayerAmmo(CurrentAmmo, Weapon.weaponInfo.MaxAmmo);
+        TargetReduceAmmo();
+    }
+
+    [TargetRpc]
+    void TargetReduceAmmo()
+    {
+        currentAmmo--;
+        playerUI.UpdatePlayerAmmo(currentAmmo, Weapon.weaponInfo.MaxAmmo);
     }
 
     [ClientRpc]
@@ -105,38 +87,34 @@ public class PlayerCombatController : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (isLocalPlayer)
+        if(!isLocalPlayer) { return; }
+
+        weaponHolster.transform.LookAt(playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)));
+        ray = playerCamera.ScreenPointToRay(new Vector3(Screen.width/2,Screen.height/2,0));
+        ray.origin = firePoint.position;
+
+        if(timeBetweenAttacks >= 0)
         {
-            weaponHolster.transform.LookAt(playerCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, playerCamera.farClipPlane)));
-            ray = playerCamera.ScreenPointToRay(new Vector3(Screen.width/2,Screen.height/2,0));
-            ray.origin = firePoint.position;
-
-            if (Input.GetKey(KeyCode.Mouse0) && hasAuthority)
-            {
-                Shoot();
-            }
-
-            if (Input.GetKeyDown(KeyCode.R) && isReloading.Equals(false))
-            {
-                StartCoroutine(TargetReloadWeapon());
-            }
-
-            if (Input.GetKeyDown(KeyCode.F))
-            {
-                GetComponent<PlayerInfo>().CmdTakeDamage(10);
-            }
-
-            if(timeBetweenAttacks >= 0)
-            {
-                canAttack = false;
-                timeBetweenAttacks -= Time.deltaTime;
-            }
-            else
-            {
-                canAttack = true;
-                muzzleFlashObject.SetActive(false);
-            }
+            canAttack = false;
+            timeBetweenAttacks -= Time.deltaTime;
         }
+        else
+        {
+            canAttack = true;
+            muzzleFlashObject.SetActive(false);
+        }  
+        
+        if (Input.GetKey(KeyCode.Mouse0) && canAttack == true && currentAmmo > 0)
+        {
+            Shoot();
+            timeBetweenAttacks = Weapon.weaponInfo.AttackRate;
+        }
+
+        if (Input.GetKeyDown(KeyCode.R) && isReloading.Equals(false))
+        {
+            StartCoroutine(TargetReloadWeapon());
+        }
+
     }
 
     [Client]
@@ -144,8 +122,8 @@ public class PlayerCombatController : NetworkBehaviour
     {
         isReloading = true;
         yield return new WaitForSeconds(Weapon.weaponInfo.ReloadTime);
-        CurrentAmmo = Weapon.weaponInfo.MaxAmmo;
-        playerUI.UpdatePlayerAmmo(CurrentAmmo, Weapon.weaponInfo.MaxAmmo);
+        currentAmmo = Weapon.weaponInfo.MaxAmmo;
+        playerUI.UpdatePlayerAmmo(currentAmmo, Weapon.weaponInfo.MaxAmmo);
         isReloading = false;
     }
 }

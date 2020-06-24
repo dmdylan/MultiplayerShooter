@@ -69,6 +69,8 @@ public class FloatingPlayerInfo : NetworkBehaviour
 
         if (!isLocalPlayer)
             return;
+
+        CmdUpdateHealthBar();
     }
 
     private void OnDestroy()

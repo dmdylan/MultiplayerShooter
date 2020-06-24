@@ -6,20 +6,11 @@ using Mirror.Examples.Basic;
 
 public class PlayerUI : NetworkBehaviour
 {
-    private PlayerCombatController playerCombatController;
-    private PlayerInfo playerInfo;
     [SerializeField] private TMP_Text ammoCount = null;
     [SerializeField] private Image healthBar = null;
 
-    public override void OnStartAuthority()
-    {
-        base.OnStartAuthority();
-
-        playerCombatController = GetComponent<PlayerCombatController>();
-        playerInfo = GetComponent<PlayerInfo>();
-    }
-
-    public void UpdatePlayerHP(float current, float max)
+    [TargetRpc]
+    public void TargetUpdatePlayerHP(float current, float max)
     {
         healthBar.fillAmount = current / max;
     }
@@ -27,5 +18,11 @@ public class PlayerUI : NetworkBehaviour
     public void UpdatePlayerAmmo(int current, int max)
     {
         ammoCount.text = $"{current}/{max}";
+    }
+
+    [Command]
+    public void CmdUpdatePlayerHP(float current, float max)
+    {
+        TargetUpdatePlayerHP(current, max);
     }
 }
